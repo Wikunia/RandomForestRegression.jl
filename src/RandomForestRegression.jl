@@ -78,7 +78,7 @@ function get_best_split(feature_matrix, left_ys, right_ys, left_idxs, right_idxs
         left_end = 0
         # checking 200 different split values and choose the best
         # by minimzing the sum of the standard deviation of both children
-        for split_val in LinRange(min_val, max_val, 200) 
+        for split_val in LinRange(min_val, max_val, 20) 
             right_end = 0
             left_end = 0
             for data_idx = 1:len_train_xs
@@ -109,7 +109,7 @@ function get_best_split(feature_matrix, left_ys, right_ys, left_idxs, right_idxs
     end
 
     std_before = cstd(train_ys)
-    max_split_c = 5
+    max_split_c = 15
 
     split_obj = SplitObj()
     split_obj.feature = feature_idx[rand_feature]
@@ -129,10 +129,10 @@ function get_best_split(feature_matrix, left_ys, right_ys, left_idxs, right_idxs
 end
 
 function queue_compute_nodes!(queue::Vector{Node}, left_node::Node, right_node::Node, train_ys)
-    if length(left_node.data_idxs) > 1 && cstd(train_ys[left_node.data_idxs]) > 0.2
+    if length(left_node.data_idxs) > 1 #&& cstd(train_ys[left_node.data_idxs]) > 10000
         push!(queue, left_node)
     end
-    if length(right_node.data_idxs) > 1 && cstd(train_ys[right_node.data_idxs]) > 0.2
+    if length(right_node.data_idxs) > 1 #&& cstd(train_ys[right_node.data_idxs]) > 10000
         push!(queue, right_node)
     end
 end
