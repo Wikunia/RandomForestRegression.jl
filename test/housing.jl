@@ -1,4 +1,5 @@
 using DataFrames, CSV, LinearAlgebra, RandomForestRegression, Statistics, StatsBase
+using DecisionTree
 
 RFR = RandomForestRegression
 
@@ -41,7 +42,7 @@ real_train_ys = train_ys[1:nof_real_train]
 cv_ys = train_ys[nof_real_train+1:end]
 @views cv_feature_matrix = feature_matrix[:,nof_real_train+1:end]
 
-forest = RFR.create_random_forest(train_feature_matrix, real_train_ys, 100)
+forest = RFR.create_random_forest(train_feature_matrix, real_train_ys, 10)
 
 pred_ys = RFR.predict_forest(forest, cv_feature_matrix; default=mean(real_train_ys))
 
@@ -76,3 +77,28 @@ pred_test_ys = RFR.predict_forest(forest, test_feature_matrix; default=mean(real
 
 submission_df = DataFrame(Id=test_df[:Id], SalePrice=pred_test_ys)
 CSV.write("data/submission_more_fts.csv", submission_df)
+
+
+# julia package
+feature_matrix = convert(Matrix, df[:,feature_cols])
+nof_real_train = convert(Int64, floor(0.8*length(train_ys)))
+println("Train on ",nof_real_train, " of ", length(train_ys))
+real_train_ys = train_ys[1:nof_real_train]
+train_feature_matrix = feature_matrix[1:nof_real_train,:]
+cv_ys = train_ys[nof_real_train+1:end]
+cv_feature_matrix = feature_matrix[nof_real_train+1:end,:]
+
+model = build_forest(real_train_ys, train_feature_matrix, 8, 100)
+pred_ys = apply_forest(model, cv_feature_matrix)
+
+mae = sum(abs.(pred_ys.-cv_ys))/length(pred_ys)
+println("With the RandomForests julia package: ")
+println("MAE: ", mae)
+println("RMSD: ", rmsd(log.(pred_ys), log.(cv_ys)))
+
+test_feature_matrix = convert(Array, convert(Matrix, test_df[:,feature_cols]))
+
+pred_test_ys = apply_forest(model, test_feature_matrix)
+
+submission_df = DataFrame(Id=test_df[:Id], SalePrice=pred_test_ys)
+CSV.write("data/submission_julia_pkg.csv", submission_df)
